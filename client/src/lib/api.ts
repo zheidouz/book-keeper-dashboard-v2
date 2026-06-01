@@ -122,6 +122,13 @@ export const chatApi = {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      callbacks.onDone();
+    };
+
     try {
       const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
@@ -143,13 +150,6 @@ export const chatApi = {
 
       const decoder = new TextDecoder();
       let buffer = "";
-      let finished = false;
-
-      function finish() {
-        if (finished) return;
-        finished = true;
-        callbacks.onDone();
-      }
 
       while (true) {
         const { done, value } = await reader.read();
