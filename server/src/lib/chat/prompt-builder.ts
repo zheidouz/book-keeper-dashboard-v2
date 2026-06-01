@@ -7,13 +7,30 @@ interface BuildPromptInput {
   userRole?: string;
 }
 
+/** Convert deadlineDay + deadlineMonthOffset into a human-readable string. */
+function formatDeadline(day: number, offset: number): string {
+  const dayOrdinal =
+    day === 1 ? "1st" :
+    day === 2 ? "2nd" :
+    day === 3 ? "3rd" :
+    day === 21 ? "21st" :
+    day === 22 ? "22nd" :
+    day === 23 ? "23rd" :
+    day === 31 ? "31st" :
+    `${day}th`;
+
+  if (offset === 0) return `${dayOrdinal} day of the same month`;
+  if (offset === 1) return `${dayOrdinal} day of the following month`;
+  return `${dayOrdinal} day, ${offset} month(s) later`;
+}
+
 export function buildPrompt(input: BuildPromptInput) {
   const formContext =
     input.forms.length > 0
       ? input.forms
           .map(
             (f) =>
-              `- BIR Form ${f.formCode}: ${f.name} | Frequency: ${f.filingFrequency} | Deadline: Day ${f.deadlineDay}, offset ${f.deadlineMonthOffset} month(s) | Category: ${f.category}`
+              `- BIR Form ${f.formCode}: ${f.name} | Frequency: ${f.filingFrequency} | Deadline: ${formatDeadline(f.deadlineDay, f.deadlineMonthOffset)} | Category: ${f.category}`
           )
           .join("\n")
       : "No matching forms found in the database.";
@@ -28,6 +45,7 @@ export function buildPrompt(input: BuildPromptInput) {
     "- Never fabricate BIR form data. Only use the context provided below.",
     "- Never give investment or legal advice.",
     '- Always prefix BIR form codes with "BIR Form " (e.g., "BIR Form 2550M").',
+    '- If the user asks a vague deadline question without specifying a form, list the available form categories from the context and ask which one they need.',
     "",
     "BIR Forms in database (top matches for this query):",
     formContext,
