@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 interface InputBarProps {
   onSend: (message: string) => void;
@@ -30,24 +30,28 @@ export function InputBar({ onSend, disabled }: InputBarProps) {
     }
   };
 
+  const hasText = input.trim().length > 0;
+
   return (
-    <div className="flex items-end gap-2 border-t border-border/50 p-3">
-      <textarea
-        ref={textareaRef}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Ask about BIR forms..."
-        rows={1}
-        disabled={disabled}
-        className="flex-1 resize-none rounded-lg border border-border/50 bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:border-primary/50 disabled:opacity-50 min-h-[38px] max-h-[120px]"
-      />
+    <div className="relative flex items-end gap-2 border-t border-violet-100/50 p-3 bg-white/50">
+      <div className="flex-1 relative">
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about BIR forms..."
+          rows={1}
+          disabled={disabled}
+          className="w-full resize-none rounded-xl border border-violet-200/60 bg-white/80 px-3.5 py-2.5 pr-10 text-sm outline-none placeholder:text-violet-300 focus:border-violet-300 focus:ring-2 focus:ring-violet-100/50 disabled:opacity-50 min-h-[42px] max-h-[120px] transition-all duration-200"
+        />
+      </div>
       <button
         onClick={handleSubmit}
-        disabled={disabled || !input.trim()}
-        className="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors"
+        disabled={disabled || !hasText}
+        className="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-lg shadow-violet-300/30 hover:shadow-violet-400/40 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:shadow-none transition-all duration-200"
       >
-        <Send size={16} />
+        <ArrowUp size={16} />
       </button>
     </div>
   );
