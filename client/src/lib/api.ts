@@ -106,3 +106,87 @@ export const calendarApi = {
     return request<CalendarEvent[]>(`/calendar${query ? `?${query}` : ""}`);
   },
 };
+
+export const chatApi = {
+  sendStream: async (
+    message: string,
+    history: Array<{ role: string; content: string }>,
+    callbacks: {
+      onToken: (token: string) => void;
+      onDone: () => void;
+      onError: (err: Error) => void;
+    }
+  ) => {
+    const token = await getClerkToken();
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      const res = await fetch(`${API_BASE}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message, history }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Request failed" }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finished = false;
+
+      function finish() {
+        if (finished) return;
+        finished = true;
+        callbacks.onDone();
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            // Separate JSON parse errors from semantic error events
+            let data;
+            try {
+              data = JSON.parse(line.slice(6));
+            } catch {
+              continue; // skip malformed JSON
+            }
+            if (data.token) callbacks.onToken(data.token);
+            if (data.error) {
+              callbacks.onError(new Error(data.error));
+              return;
+            }
+            if (data.usage) finish();
+          }
+        }
+      }
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        callbacks.onError(new Error("Request timed out after 30 seconds"));
+      } else {
+        callbacks.onError(err);
+      }
+      return;
+    } finally {
+      clearTimeout(timeout);
+    }
+    finish();
+  },
+};

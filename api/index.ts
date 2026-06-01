@@ -17,6 +17,7 @@ import usersRouter from "../server/src/routes/users.js";
 import reportsRouter from "../server/src/routes/reports.js";
 import calendarRouter from "../server/src/routes/calendar.js";
 import notificationsRouter from "../server/src/routes/notifications.js";
+import chatRouter from "../server/src/routes/chat.js";
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use("/api/users", usersRouter);
 app.use("/api/reports", reportsRouter);
 app.use("/api/calendar", calendarRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/chat", chatRouter);
 
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({

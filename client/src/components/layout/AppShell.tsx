@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
+import { ChatBubble } from "@/components/chat/ChatBubble";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ export function AppShell() {
           <Outlet />
         </div>
       </main>
+      <ChatBubble />
     </div>
   );
 }
