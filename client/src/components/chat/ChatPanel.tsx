@@ -49,8 +49,8 @@ export function ChatPanel() {
                 <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-[1.5px] border-white" />
               </div>
               <div>
-                <span className="text-sm font-bold text-white tracking-tight">AI Assistant</span>
-                <p className="text-[10px] text-white/60 leading-none mt-0.5">Bookkeeping • BIR Forms</p>
+                <span className="text-sm font-bold text-white tracking-tight">Cookie</span>
+                <p className="text-[10px] text-white/60 leading-none mt-0.5">Your accounting cat • BIR Forms</p>
               </div>
             </div>
             <div className="flex items-center gap-0.5">
@@ -87,14 +87,14 @@ export function ChatPanel() {
                 <ChatLogo size={40} />
               </div>
               <p className="text-sm font-semibold text-violet-900">
-                Ask me about BIR forms
+                Meow! Ask Cookie about BIR forms
               </p>
-              <p className="text-xs text-violet-500/70 mt-1.5 max-w-[200px]">
-                Deadlines, form codes, filing frequencies — powered by DeepSeek AI
+              <p className="text-xs text-violet-500/70 mt-1.5 max-w-[220px]">
+                Deadlines, form codes, tax rates — Cookie knows them all!
               </p>
               <div className="flex items-center gap-1 mt-3 text-[10px] text-violet-400/50">
                 <Sparkles size={10} />
-                <span>Ask anything about Philippine taxes</span>
+                <span>Purring with Philippine tax knowledge</span>
               </div>
             </div>
           )}

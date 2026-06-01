@@ -40,7 +40,7 @@ export function InputBar({ onSend, disabled }: InputBarProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask about BIR forms..."
+          placeholder="Ask Cookie about BIR forms..."
           rows={1}
           disabled={disabled}
           className="w-full resize-none rounded-xl border border-violet-200/60 bg-white/80 px-3.5 py-2.5 pr-10 text-sm outline-none placeholder:text-violet-300 focus:border-violet-300 focus:ring-2 focus:ring-violet-100/50 disabled:opacity-50 min-h-[42px] max-h-[120px] transition-all duration-200"
