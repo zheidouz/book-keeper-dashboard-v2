@@ -18,6 +18,7 @@ export default function FinishedTasks() {
   const queryClient = useQueryClient();
 
   const { data: tasks = [], isLoading } = useQuery({
+    refetchInterval: 30_000,
     queryKey: ["tasks", "done"],
     queryFn: () => tasksApi.list({ status: "done" }),
   });

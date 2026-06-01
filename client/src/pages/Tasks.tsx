@@ -31,7 +31,7 @@ export default function Tasks() {
   const [showCreate, setShowCreate] = useState(false);
   const [newTask, setNewTask] = useState({ clientId: 0, formType: "bir", formId: 0, assignedTo: 0 });
 
-  const { data: overview } = useQuery({ queryKey: ["tasks-overview"], queryFn: tasksApi.overview });
+  const { data: overview } = useQuery({ queryKey: ["tasks-overview"], queryFn: tasksApi.overview, refetchInterval: 15_000 });
   const tasks = overview?.tasks ?? [];
   const clients = overview?.clients ?? [];
   const bookkeepers = overview?.bookkeepers ?? [];

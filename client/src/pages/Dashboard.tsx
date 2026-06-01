@@ -14,6 +14,7 @@ export default function Dashboard() {
     queryKey: ["dashboard"],
     queryFn: reportsApi.dashboard,
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 30_000,
   });
   const stats = dashData?.stats;
   const distribution = dashData?.distribution;
