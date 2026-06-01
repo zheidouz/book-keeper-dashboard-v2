@@ -1,0 +1,19 @@
+name: Keep Warm
+
+on:
+  schedule:
+    # Every 4 minutes, Mon-Fri only, 8AM-11:50AM and 1PM-6:50PM PH (UTC+8)
+    - cron: "*/4 0-3,5-10 * * 1-5"
+    # Last ping at 7PM PH
+    - cron: "0 11 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API to keep Vercel function warm
+        run: |
+          curl -s -o /dev/null -w "%{http_code}\n" \
+            "https://www.tao-bookkeepers.online/api/reports/stats" \
+            --max-time 10
