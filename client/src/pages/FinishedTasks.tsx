@@ -25,7 +25,7 @@ export default function FinishedTasks() {
   const revertMutation = useMutation({
     mutationFn: (id: number) => tasksApi.updateStatus(id, "pending"),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-overview"] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "done"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
@@ -34,7 +34,7 @@ export default function FinishedTasks() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => tasksApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-overview"] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "done"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },

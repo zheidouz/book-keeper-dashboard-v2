@@ -41,7 +41,7 @@ export default function Tasks() {
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) => tasksApi.updateStatus(id, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-overview"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       // Don't invalidate dashboard — stays fresh via staleTime
     },
@@ -58,7 +58,7 @@ export default function Tasks() {
       assignedTo: newTask.assignedTo || undefined,
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-overview"] });
       setShowCreate(false);
       setNewTask({ clientId: 0, formType: "bir", formId: 0, assignedTo: 0 });
     },

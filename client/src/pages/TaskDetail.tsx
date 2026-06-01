@@ -25,7 +25,7 @@ export default function TaskDetail() {
     mutationFn: (newStatus: string) => tasksApi.updateStatus(parseInt(id!), newStatus, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["task", id] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-overview"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       setComment("");
     },

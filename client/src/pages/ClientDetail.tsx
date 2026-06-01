@@ -39,7 +39,7 @@ export default function ClientDetail() {
     mutationFn: () => tasksApi.create({ clientId: parseInt(id!), formType: newTaskFormType, formId: newTaskForm }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client", id] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-overview"] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["custom-forms"] });
       setShowAddTask(false);
@@ -79,7 +79,7 @@ export default function ClientDetail() {
     mutationFn: (taskId: number) => tasksApi.delete(taskId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client", id] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-overview"] });
     },
   });
 
