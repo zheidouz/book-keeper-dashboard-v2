@@ -26,6 +26,17 @@ export async function findRelevantForms(query: string, limit = 5): Promise<FormM
   // Build conditions: match by formCode/name keyword, and optionally by category
   const conditions: any[] = [eq(schema.birForms.isActive, true)];
 
+  // Extract potential form code patterns like "2550M", "1701", "0619-E"
+  const formCodePatterns = query.match(/\b\d{3,4}[A-Z]?(?:-[A-Z]+)?\b/g);
+  const formCodeConds: any[] = [];
+  if (formCodePatterns && formCodePatterns.length > 0) {
+    for (const code of formCodePatterns) {
+      formCodeConds.push(
+        sql`${schema.birForms.formCode} = ${code.toUpperCase()}`
+      );
+    }
+  }
+
   const keywordCond = sql`(lower(${schema.birForms.formCode}) like ${term} or lower(${schema.birForms.name}) like ${term})`;
 
   // Check if query mentions a known category
@@ -37,16 +48,16 @@ export async function findRelevantForms(query: string, limit = 5): Promise<FormM
     }
   }
 
-  if (categoryMatch) {
-    // When a category is detected, return forms matching keyword OR category
-    // Use a larger limit to cover the category
-    conditions.push(
-      or(keywordCond, eq(schema.birForms.category, categoryMatch))
-    );
-    limit = Math.max(limit, 10);
-  } else {
-    conditions.push(keywordCond);
+  // Combine keyword match with any exact form code matches and optional category
+  const matchConds: any[] = [keywordCond];
+  if (formCodeConds.length > 0) {
+    matchConds.push(or(...formCodeConds));
   }
+  if (categoryMatch) {
+    matchConds.push(eq(schema.birForms.category, categoryMatch));
+    limit = Math.max(limit, 10);
+  }
+  conditions.push(matchConds.length > 1 ? or(...matchConds) : matchConds[0]);
 
   return db
     .select({
