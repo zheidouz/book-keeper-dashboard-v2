@@ -143,9 +143,9 @@ describe("calculateDeadline", () => {
     });
 
     it("uses last day of month when deadlineDay exceeds month length", () => {
-      // Offset 3 -> March (month 2, 0-indexed) has 31 days, so no clamping.
       // Offset 4 -> April (month 3, 0-indexed) has 30 days. deadlineDay=31 -> clamped to 30.
-      const ref = new Date(2026, 0, 1);
+      // Reference is after April (May) so deadline rolls to next year.
+      const ref = new Date(2026, 4, 1); // May 1, 2026
       const result = calculateDeadline({
         filingFrequency: "annually",
         deadlineDay: 31,

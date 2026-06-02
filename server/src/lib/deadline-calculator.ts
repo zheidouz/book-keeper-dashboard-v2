@@ -31,7 +31,10 @@ export function calculateDeadline(input: DeadlineInput): DeadlineResult {
     case "annually":
       // deadlineMonthOffset is 1-indexed month number (1=Jan, 4=Apr)
       deadlineMonth = Math.max(0, input.deadlineMonthOffset - 1);
-      deadlineYear = year + 1;
+      // Use current year if the deadline month hasn't passed yet, else next year
+      deadlineYear = (deadlineMonth > month || (deadlineMonth === month && input.deadlineDay >= now.getDate()))
+        ? year
+        : year + 1;
       filingPeriod = "" + year; taxYear = year; label = "Annual filing for tax year " + year; break;
     default:
       deadlineMonth = month + input.deadlineMonthOffset; deadlineYear = year;

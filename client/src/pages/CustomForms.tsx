@@ -29,6 +29,11 @@ const FREQ_LABELS: Record<string, string> = {
   one_time: "One-Time",
 };
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 const emptyForm = {
   name: "",
   description: "",
@@ -300,6 +305,28 @@ export default function CustomForms() {
                   </div>
                 </div>
 
+                {/* Deadline Month (for annually, semi-annual, one-time) */}
+                {["annually", "semi_annual", "one_time"].includes(form.filingFrequency) && (
+                  <div>
+                    <label htmlFor="form-deadline-month" className="block text-sm font-medium mb-1.5">
+                      Deadline Month
+                    </label>
+                    <Select
+                      id="form-deadline-month"
+                      value={String(form.deadlineMonthOffset)}
+                      onChange={(e) =>
+                        setForm({ ...form, deadlineMonthOffset: parseInt(e.target.value) })
+                      }
+                    >
+                      {MONTHS.map((m, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          {m}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
+
                 {/* Required Fields */}
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Required Fields</label>
@@ -478,7 +505,9 @@ export default function CustomForms() {
                           {FREQ_LABELS[cf.filingFrequency] || cf.filingFrequency}
                         </Badge>
                         <Badge variant="outline" className="text-[11px] px-2 py-0.5 font-medium">
-                          Due day {cf.deadlineDay || 15}
+                          {["annually", "semi_annual", "one_time"].includes(cf.filingFrequency) && cf.deadlineMonthOffset
+                            ? `${MONTHS[cf.deadlineMonthOffset - 1]} ${cf.deadlineDay || 15}`
+                            : `Due day ${cf.deadlineDay || 15}`}
                         </Badge>
                       </div>
 
