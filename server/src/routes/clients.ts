@@ -128,7 +128,13 @@ router.post("/", requireRole("admin","manager","bookkeeper"), async (req, res) =
     if (!name) return res.status(400).json({ success: false, error: "Client name is required" });
     const [inserted] = await db.insert(schema.clients).values({ name, contactPerson, email, phone, address, notes }).returning();
     const id = inserted.id;
-    if (assignedTo) await db.insert(schema.clientAssignments).values({ clientId: id, userId: assignedTo }).run();
+    const creator = req.authUser;
+    if (creator?.role === "bookkeeper") {
+      // Auto-assign the bookkeeper who created the client
+      await db.insert(schema.clientAssignments).values({ clientId: id, userId: creator.id }).run();
+    } else if (assignedTo) {
+      await db.insert(schema.clientAssignments).values({ clientId: id, userId: assignedTo }).run();
+    }
     const [client] = await db.select().from(schema.clients).where(eq(schema.clients.id, id)).all();
     res.status(201).json({ success: true, data: client });
   } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }

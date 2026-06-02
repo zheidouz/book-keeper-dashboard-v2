@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.1",
+  "skill_version": "1.5.6",
+  "date": "2026-06-01",
+  "project": "book-keeper-dashboard-v2",
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "requirement": "REQ-007",
+      "red_phase": "error",
+      "green_phase": "skipped",
+      "verdict": "confirmed open",
+      "fix_patch_present": false,
+      "writeup_path": "quality/BUGS.md",
+      "notes": "TDD environment limitation: server imports not resolvable from client vitest config. Bug confirmed via code review and spec audit (3/3 auditors). Fix: add history validation loop in routes/chat.ts."
+    },
+    {
+      "id": "BUG-002",
+      "requirement": "REQ-001",
+      "red_phase": "error",
+      "green_phase": "skipped",
+      "verdict": "confirmed open",
+      "fix_patch_present": false,
+      "writeup_path": "quality/BUGS.md",
+      "notes": "TDD environment limitation. Bug confirmed via code review and spec audit (2/3 auditors). Fix: separate SSE error event handling from JSON parse catch block."
+    },
+    {
+      "id": "BUG-003",
+      "requirement": "REQ-002",
+      "red_phase": "error",
+      "green_phase": "skipped",
+      "verdict": "confirmed open",
+      "fix_patch_present": false,
+      "writeup_path": "quality/BUGS.md",
+      "notes": "TDD environment limitation. Bug confirmed via code review and spec audit (2/3 auditors). Fix: add AbortController with 30s timeout."
+    },
+    {
+      "id": "BUG-004",
+      "requirement": "REQ-006",
+      "red_phase": "error",
+      "green_phase": "skipped",
+      "verdict": "confirmed open",
+      "fix_patch_present": false,
+      "writeup_path": "quality/BUGS.md",
+      "notes": "TDD environment limitation. Bug confirmed via code review. Fix: add retry wrapper with exponential backoff."
+    },
+    {
+      "id": "BUG-005",
+      "requirement": "REQ-003",
+      "red_phase": "error",
+      "green_phase": "skipped",
+      "verdict": "confirmed open",
+      "fix_patch_present": false,
+      "writeup_path": "quality/BUGS.md",
+      "notes": "TDD environment limitation. Bug confirmed via code review and spec audit (2/3 auditors). Fix: remove empty message on send failure."
+    },
+    {
+      "id": "BUG-006",
+      "requirement": "REQ-005",
+      "red_phase": "error",
+      "green_phase": "skipped",
+      "verdict": "confirmed open",
+      "fix_patch_present": false,
+      "writeup_path": "quality/BUGS.md",
+      "notes": "TDD environment limitation. Bug confirmed via code review. Fix: validate DEEPSEEK_API_KEY at module initialization."
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "verified": 0,
+    "confirmed_open": 6,
+    "red_failed": 0,
+    "green_failed": 0
+  }
+}

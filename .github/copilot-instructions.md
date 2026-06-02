@@ -31,6 +31,7 @@ Available in `.github/agents/` — activate via VS Code Chat by mentioning the a
 | `frontend-performance-investigator` | Diagnose Core Web Vitals, Lighthouse regressions, long tasks with Chrome DevTools | `/frontend-performance-investigator Debug dashboard LCP` |
 | `neon-optimization-analyzer` | Find and fix slow Postgres queries via Neon branching | `/neon-optimization-analyzer Analyze slow task queries` |
 | `postgresql-dba` | PostgreSQL DBA for managing, querying, and optimizing Postgres databases | `/postgresql-dba Show slow queries in pg_stat_statements` |
+| `chatbot-ai-optimizer` | AI chatbot optimization — prompt engineering, SSE streaming, error recovery, token cost control | `/chatbot-ai-optimizer Optimize the chatbot prompt for BIR form accuracy` |
 
 ## 📋 Custom Instructions
 
@@ -151,6 +152,12 @@ Available in `.github/skills/` — loaded on demand for specialized workflows.
 | `sql-optimization` | Universal SQL tuning: query analysis, index strategy, pagination, batch ops, anti-pattern detection |
 | `sql-code-review` | SQL security & quality review: injection prevention, N+1 queries, join optimization, schema design |
 
+### AI Chatbot Optimization
+| Skill | Description |
+|-------|-------------|
+| `chatbot-prompt-optimizer` | Optimize AI chatbot system prompt, BIR form context injection, and LLM response quality. Covers prompt structure tuning, hallucination reduction, token cost control |
+| `chatbot-sse-debugger` | Debug SSE streaming issues: slow responses, timeouts, connection drops, silent error swallowing, partial renders. Covers AbortController, fetch stream parsing, error propagation |
+
 ## 🚀 Recommended Workflows
 
 ### Feature Development Flow
@@ -201,3 +208,11 @@ Available in `.github/skills/` — loaded on demand for specialized workflows.
 3. `dependabot` skill → Dependency check
 4. `review-and-refactor` skill → Code review
 5. `/critical-thinking` → Challenge assumptions
+
+### Chatbot AI Optimization Flow
+1. `/chatbot-ai-optimizer Audit current prompt quality` → Prompt structure review
+2. `chatbot-prompt-optimizer` skill → Tune system prompt, BIR form context, cost
+3. `chatbot-sse-debugger` skill → Debug streaming, timeout, error handling
+4. `/debug` → Deep-dive into identified issues
+5. `/qa-subagent` → Verify response quality improvements
+6. `doublecheck` skill → Verify AI output

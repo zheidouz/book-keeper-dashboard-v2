@@ -83,7 +83,9 @@ export default function ClientDetail() {
     },
   });
 
-  const canManage = user?.role === "admin" || user?.role === "manager";
+  const canEdit = user?.role === "admin" || user?.role === "manager" || user?.role === "bookkeeper";
+  const canDeleteClient = user?.role === "admin" || user?.role === "manager";
+  const canDeleteTask = user?.role === "admin" || user?.role === "manager" || user?.role === "bookkeeper";
 
   if (isLoading) return <div className="p-6"><TopBar title="Loading..." /></div>;
   if (!client) return <div className="p-6"><TopBar title="Client Not Found" /></div>;
@@ -114,14 +116,16 @@ export default function ClientDetail() {
                 <Button variant="ghost" onClick={() => setEditing(false)}>
                   <X size={14} className="mr-1" /> Cancel
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="ml-auto"
-                  onClick={() => { if (confirm(`Delete "${client.name}" and all its tasks?`)) deleteMutation.mutate(); }}
-                >
-                  <Trash2 size={14} className="mr-1" /> Delete Client
-                </Button>
+                {canDeleteClient && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => { if (confirm(`Delete "${client.name}" and all its tasks?`)) deleteMutation.mutate(); }}
+                  >
+                    <Trash2 size={14} className="mr-1" /> Delete Client
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
@@ -152,7 +156,7 @@ export default function ClientDetail() {
                     </div>
                   </div>
                 </div>
-                {canManage && (
+                {canEdit && (
                   <div className="flex gap-2 shrink-0">
                     <Button size="sm" variant="outline" onClick={() => {
                       setEditForm({
@@ -288,7 +292,7 @@ export default function ClientDetail() {
                       <span className="text-xs text-destructive font-medium">Overdue</span>
                     )}
                     <Badge className={STATUS_COLORS[task.status]}>{STATUS_LABELS[task.status]}</Badge>
-                    {canManage && (
+                    {canDeleteTask && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();

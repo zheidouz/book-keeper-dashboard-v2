@@ -16,9 +16,11 @@ interface KanbanBoardProps {
   userRole?: string;
   onDragEnd: (result: DropResult) => void;
   onMarkDone: (id: number) => void;
+  draggingTaskId?: number | null;
+  dragProgress?: number;
 }
 
-export default function KanbanBoard({ columns, userRole, onDragEnd, onMarkDone }: KanbanBoardProps) {
+export default function KanbanBoard({ columns, userRole, onDragEnd, onMarkDone, draggingTaskId, dragProgress }: KanbanBoardProps) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 overflow-hidden flex-1 pb-2">
@@ -60,6 +62,8 @@ export default function KanbanBoard({ columns, userRole, onDragEnd, onMarkDone }
                           innerRef={provided.innerRef}
                           draggableProps={provided.draggableProps}
                           dragHandleProps={provided.dragHandleProps}
+                          isMoving={draggingTaskId === task.id}
+                          moveProgress={draggingTaskId === task.id ? dragProgress ?? 0 : 0}
                         />
                       )}
                     </Draggable>
@@ -87,6 +91,8 @@ const KanbanCard = memo(function KanbanCard({
   innerRef,
   draggableProps,
   dragHandleProps,
+  isMoving,
+  moveProgress,
 }: {
   task: Task;
   columnStatus: string;
@@ -96,6 +102,8 @@ const KanbanCard = memo(function KanbanCard({
   innerRef: React.Ref<HTMLAnchorElement>;
   draggableProps: any;
   dragHandleProps: any;
+  isMoving?: boolean;
+  moveProgress?: number;
 }) {
   return (
     <Link
@@ -133,6 +141,19 @@ const KanbanCard = memo(function KanbanCard({
           </button>
         )}
       </div>
+      {isMoving && moveProgress !== undefined && moveProgress > 0 && (
+        <div className="mt-2">
+          <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-100 ease-out ${
+                moveProgress >= 100 ? 'bg-emerald-500' : 'bg-primary'
+              }`}
+              style={{ width: `${moveProgress}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground text-right mt-0.5">{moveProgress}%</p>
+        </div>
+      )}
       <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-dashed border-border/40 text-xs">
         <div className="flex items-center gap-1">
           <Calendar size={12} className="text-muted-foreground shrink-0" />

@@ -64,7 +64,8 @@ export default function Clients() {
     onError: (err: Error) => alert(err.message),
   });
 
-  const canManage = user?.role === "admin" || user?.role === "manager";
+  const canEdit = user?.role === "admin" || user?.role === "manager" || user?.role === "bookkeeper";
+  const canDelete = user?.role === "admin" || user?.role === "manager";
 
   const filteredClients = search
     ? clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
@@ -195,7 +196,7 @@ export default function Clients() {
                   </Link>
 
                   {/* Row 4: Edit/Delete actions (icon buttons, right-aligned) */}
-                  {canManage && editingId !== client.id && (
+                  {canEdit && editingId !== client.id && (
                     <div className="flex justify-end items-center gap-1 px-3 pb-3">
                       <button
                         onClick={() => { setEditingId(client.id); setEditData({ name: client.name, contactPerson: client.contactPerson || "", email: client.email || "", phone: client.phone || "" }); }}
@@ -204,13 +205,15 @@ export default function Clients() {
                       >
                         <Pencil size={14} />
                       </button>
-                      <button
-                        onClick={() => { if (confirm(`Delete "${client.name}"? This will also remove all associated tasks.`)) deleteMutation.mutate(client.id); }}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground/60 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete client"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => { if (confirm(`Delete "${client.name}"? This will also remove all associated tasks.`)) deleteMutation.mutate(client.id); }}
+                          className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground/60 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Delete client"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   )}
                 </>

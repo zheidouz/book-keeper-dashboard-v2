@@ -1,10 +1,14 @@
+# Keeps Vercel serverless functions warm to prevent cold starts
+# during business hours (Mon-Fri, PH time UTC+8)
 name: Keep Warm
 
 on:
   schedule:
-    # Every 4 minutes, Mon-Fri only, 8AM-11:50AM and 1PM-6:50PM PH (UTC+8)
-    - cron: "*/4 0-3,5-10 * * 1-5"
-    # Last ping at 7PM PH
+    # Every 5 min, 8AM–11:55AM PH (UTC 0-3)
+    - cron: "*/5 0-3 * * 1-5"
+    # Every 5 min, 1PM–6:55PM PH (UTC 5-10)
+    - cron: "*/5 5-10 * * 1-5"
+    # Last ping at 7PM PH (UTC 11:00)
     - cron: "0 11 * * 1-5"
   workflow_dispatch:
 
@@ -14,6 +18,11 @@ jobs:
     steps:
       - name: Ping API to keep Vercel function warm
         run: |
-          curl -s -o /dev/null -w "%{http_code}\n" \
+          http_code=$(curl -s -o /dev/null -w "%{http_code}" \
             "https://www.tao-bookkeepers.online/api/reports/stats" \
-            --max-time 10
+            --max-time 15)
+          if [ "$http_code" -ne 200 ]; then
+            echo "WARNING: Keep-warm ping returned $http_code"
+            exit 1
+          fi
+          echo "OK — $http_code"

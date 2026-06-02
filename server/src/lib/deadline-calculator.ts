@@ -19,7 +19,7 @@ export function calculateDeadline(input: DeadlineInput): DeadlineResult {
   let deadlineMonth, deadlineYear, filingPeriod, taxYear, label;
   switch (input.filingFrequency) {
     case "monthly":
-      deadlineMonth = month + 1 + input.deadlineMonthOffset; deadlineYear = year;
+      deadlineMonth = month + input.deadlineMonthOffset; deadlineYear = year;
       if (deadlineMonth > 11) { deadlineMonth -= 12; deadlineYear++; }
       filingPeriod = year + "-" + String(month + 1).padStart(2, "0"); taxYear = year;
       label = "Monthly filing for " + filingPeriod; break;

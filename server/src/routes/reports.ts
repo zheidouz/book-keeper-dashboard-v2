@@ -27,10 +27,17 @@ router.get("/stats", async (req, res) => {
     }).from(schema.tasks).where(taskFilter).all();
 
     // ── Single query for client/user counts ──
-    const metaCountsPromise = db.select({
-      totalClients: count().as("total_clients"),
-      activeUsers: count().as("active_users"),
-    }).from(schema.clients).all();
+    const metaCountsPromise = user?.role === "bookkeeper"
+      ? (async () => {
+          const [clientCount] = await db.select({ totalClients: count() }).from(schema.clientAssignments)
+            .where(eq(schema.clientAssignments.userId, user.id)).all();
+          const [userCount] = await db.select({ activeUsers: count() }).from(schema.clients).all();
+          return [{ totalClients: clientCount?.totalClients ?? 0, activeUsers: userCount?.activeUsers ?? 0 }];
+        })()
+      : db.select({
+          totalClients: count().as("total_clients"),
+          activeUsers: count().as("active_users"),
+        }).from(schema.clients).all();
 
     const [taskStats, metaCounts] = await Promise.all([taskStatsPromise, metaCountsPromise]);
 
@@ -106,8 +113,11 @@ router.get("/dashboard", async (req, res) => {
           overdueTasks: sql<number>`sum(case when ${filteredTasks.deadline} < ${today} and ${filteredTasks.status} not in ('completed', 'done') then 1 else 0 end)`.as("overdue_tasks"),
           upcomingDeadlines: sql<number>`sum(case when ${filteredTasks.deadline} >= ${today} and ${filteredTasks.deadline} <= ${in30} and ${filteredTasks.status} not in ('completed', 'done') then 1 else 0 end)`.as("upcoming_deadlines"),
         }).from(filteredTasks).all(),
-      // Single-row scalar subquery for client count — avoids a separate table scan
-      db.select({ totalClients: count().as("total_clients") }).from(schema.clients).all(),
+      // Bookkeepers see only their assigned clients; others see all clients
+      user?.role === "bookkeeper"
+        ? db.select({ totalClients: count() }).from(schema.clientAssignments)
+            .where(eq(schema.clientAssignments.userId, user.id)).all()
+        : db.select({ totalClients: count().as("total_clients") }).from(schema.clients).all(),
       db.select({ month: monthExpr, count: count() }).from(schema.tasks).groupBy(monthExpr).orderBy(monthExpr).all(),
     ]);
 

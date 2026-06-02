@@ -51,7 +51,10 @@ router.post("/", requireRole("admin","manager","bookkeeper"), async (req, res) =
       formName = form.name; filingFrequency = form.filingFrequency; deadlineDay = form.deadlineDay || 15; deadlineMonthOffset = form.deadlineMonthOffset;
     }
     const dr = calculateDeadline({ filingFrequency, deadlineDay, deadlineMonthOffset });
-    const [inserted] = await db.insert(schema.tasks).values({ clientId, formType, formId, formCode, formName, status: "pending", deadline: dr.deadline, filingPeriod: dr.filingPeriod, taxYear: dr.taxYear, assignedTo: assignedTo || null, notes: notes || null }).returning();
+    const creator = req.authUser;
+    // Bookkeepers auto-assign tasks to themselves unless explicitly targeting someone else
+    const taskAssignedTo = creator?.role === "bookkeeper" ? (assignedTo || creator.id) : (assignedTo || null);
+    const [inserted] = await db.insert(schema.tasks).values({ clientId, formType, formId, formCode, formName, status: "pending", deadline: dr.deadline, filingPeriod: dr.filingPeriod, taxYear: dr.taxYear, assignedTo: taskAssignedTo, notes: notes || null }).returning();
     res.status(201).json({ success: true, data: inserted });
   } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -69,7 +72,7 @@ router.patch("/:id/status", async (req, res) => {
     if (!task) return res.status(404).json({ success: false, error: "Task not found" });
     const allowed = STATUS_FLOW[task.status] || [];
     if (!allowed.includes(newStatus)) return res.status(400).json({ success: false, error: "Cannot move from " + task.status + " to " + newStatus });
-    if (newStatus === "done" && task.status === "completed" && !["admin","manager"].includes(user?.role || "")) return res.status(403).json({ success: false, error: "Only admin/manager can mark as done" });
+    if (newStatus === "done" && task.status === "completed" && !["admin","manager","bookkeeper"].includes(user?.role || "")) return res.status(403).json({ success: false, error: "Only admin/manager/bookkeeper can mark as done" });
 
     // Atomic CAS: only update if status hasn't changed since we read it
     const result = await db.update(schema.tasks)
@@ -175,29 +178,60 @@ router.patch("/:id/status", async (req, res) => {
  */
 router.get("/overview", async (req, res) => {
   try {
-    const [tasks, clients, bookkeepers] = await Promise.all([
-      db.select({
-        id: schema.tasks.id,
-        clientId: schema.tasks.clientId,
-        clientName: schema.clients.name,
-        formType: schema.tasks.formType,
-        formCode: schema.tasks.formCode,
-        formName: schema.tasks.formName,
-        status: schema.tasks.status,
-        deadline: schema.tasks.deadline,
-        filingPeriod: schema.tasks.filingPeriod,
-        assignedTo: schema.tasks.assignedTo,
-        assigneeName: schema.users.name,
-        notes: schema.tasks.notes,
-        createdAt: schema.tasks.createdAt,
-        updatedAt: schema.tasks.updatedAt,
+    const user = req.authUser;
+
+    // Bookkeepers see only their assigned clients in the dropdown
+    let clientsQuery;
+    if (user?.role === "bookkeeper") {
+      clientsQuery = db.select({
+        id: schema.clients.id,
+        name: schema.clients.name,
+        contactPerson: schema.clients.contactPerson,
+        email: schema.clients.email,
+        phone: schema.clients.phone,
+        address: schema.clients.address,
+        notes: schema.clients.notes,
+        createdAt: schema.clients.createdAt,
+        updatedAt: schema.clients.updatedAt,
       })
-        .from(schema.tasks)
-        .leftJoin(schema.clients, eq(schema.tasks.clientId, schema.clients.id))
-        .leftJoin(schema.users, eq(schema.tasks.assignedTo, schema.users.id))
-        .orderBy(asc(schema.tasks.statusSortOrder), asc(schema.tasks.deadline))
-        .all(),
-      db.select().from(schema.clients).orderBy(asc(schema.clients.name)).all(),
+        .from(schema.clients)
+        .innerJoin(schema.clientAssignments, eq(schema.clients.id, schema.clientAssignments.clientId))
+        .where(eq(schema.clientAssignments.userId, user.id))
+        .orderBy(asc(schema.clients.name))
+        .all();
+    } else {
+      clientsQuery = db.select().from(schema.clients).orderBy(asc(schema.clients.name)).all();
+    }
+
+    // Bookkeepers only see tasks assigned to them
+    let tasksQuery = db.select({
+      id: schema.tasks.id,
+      clientId: schema.tasks.clientId,
+      clientName: schema.clients.name,
+      formType: schema.tasks.formType,
+      formCode: schema.tasks.formCode,
+      formName: schema.tasks.formName,
+      status: schema.tasks.status,
+      deadline: schema.tasks.deadline,
+      filingPeriod: schema.tasks.filingPeriod,
+      assignedTo: schema.tasks.assignedTo,
+      assigneeName: schema.users.name,
+      notes: schema.tasks.notes,
+      createdAt: schema.tasks.createdAt,
+      updatedAt: schema.tasks.updatedAt,
+    })
+      .from(schema.tasks)
+      .leftJoin(schema.clients, eq(schema.tasks.clientId, schema.clients.id))
+      .leftJoin(schema.users, eq(schema.tasks.assignedTo, schema.users.id))
+      .orderBy(asc(schema.tasks.statusSortOrder), asc(schema.tasks.deadline));
+
+    if (user?.role === "bookkeeper") {
+      tasksQuery = tasksQuery.where(eq(schema.tasks.assignedTo, user.id));
+    }
+
+    const [tasks, clients, bookkeepers] = await Promise.all([
+      tasksQuery.all(),
+      clientsQuery,
       db.select().from(schema.users).where(sql`role IN ('bookkeeper','manager','admin')`).orderBy(asc(schema.users.name)).all(),
     ]);
     res.json({ success: true, data: { tasks, clients, bookkeepers } });
@@ -216,12 +250,20 @@ router.get("/:id", async (req, res) => {
     res.json({ success: true, data: { ...task, history } });
   } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
 });
-router.delete("/:id", requireRole("admin", "manager"), async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
+    const user = req.authUser;
+    if (!user) return res.status(401).json({ success: false, error: "Authentication required" });
     const id = parseIdParam(req.params.id);
     if (!id) return res.status(400).json({ success: false, error: "Invalid task ID" });
     const [task] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, id)).all();
     if (!task) return res.status(404).json({ success: false, error: "Task not found" });
+    // Admin/manager can delete any task; bookkeeper can only delete tasks assigned to them
+    const isAdminOrManager = user.role === "admin" || user.role === "manager";
+    const isOwnTask = user.role === "bookkeeper" && task.assignedTo === user.id;
+    if (!isAdminOrManager && !isOwnTask) {
+      return res.status(403).json({ success: false, error: "Insufficient permissions" });
+    }
     await db.delete(schema.taskHistory).where(eq(schema.taskHistory.taskId, id)).run();
     await db.delete(schema.notifications).where(eq(schema.notifications.taskId, id)).run();
     await db.delete(schema.tasks).where(eq(schema.tasks.id, id)).run();

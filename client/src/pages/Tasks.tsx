@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useTransition, lazy, Suspense } from "react";
+import { useState, useMemo, memo, useTransition, lazy, Suspense, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { tasksApi, clientsApi, usersApi, formsApi } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,9 @@ export default function Tasks() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [newTask, setNewTask] = useState({ clientId: 0, formType: "bir", formId: 0, assignedTo: 0 });
+  const [draggingTaskId, setDraggingTaskId] = useState<number | null>(null);
+  const [dragProgress, setDragProgress] = useState(0);
+  const dragIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: overview } = useQuery({ queryKey: ["tasks-overview"], queryFn: tasksApi.overview, refetchInterval: 15_000 });
   const tasks = overview?.tasks ?? [];
@@ -43,10 +46,11 @@ export default function Tasks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks-overview"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      // Don't invalidate dashboard — stays fresh via staleTime
+      completeDragProgress();
     },
     onError: (err: Error) => {
       alert(err.message);
+      completeDragProgress();
     },
   });
 
@@ -78,6 +82,32 @@ export default function Tasks() {
     done: ["pending"],
   };
 
+  const completeDragProgress = () => {
+    if (dragIntervalRef.current) clearInterval(dragIntervalRef.current);
+    setDragProgress(100);
+    setTimeout(() => {
+      setDraggingTaskId(null);
+      setDragProgress(0);
+    }, 400);
+  };
+
+  const startDragProgress = (taskId: number) => {
+    setDraggingTaskId(taskId);
+    setDragProgress(0);
+    const startTime = Date.now();
+    const duration = 1500;
+    if (dragIntervalRef.current) clearInterval(dragIntervalRef.current);
+    dragIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(Math.round((elapsed / duration) * 100), 95);
+      setDragProgress(pct);
+      if (pct >= 95 && dragIntervalRef.current) {
+        clearInterval(dragIntervalRef.current);
+        dragIntervalRef.current = null;
+      }
+    }, 60);
+  };
+
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     startTransition(() => {
@@ -90,6 +120,7 @@ export default function Tasks() {
         alert(`Cannot move task from "${STATUS_LABELS[task.status] || task.status}" directly to "${STATUS_LABELS[newStatus] || newStatus}".\nValid moves: ${allowed.map((s) => STATUS_LABELS[s] || s).join(", ")}`);
         return;
       }
+      startDragProgress(taskId);
       statusMutation.mutate({ id: taskId, status: newStatus });
     });
   };
@@ -142,7 +173,7 @@ export default function Tasks() {
           <Card className="border-primary/20">
             <CardContent className="p-4 space-y-3">
               <h3 className="font-medium">Create New Task</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                 <Select value={newTask.clientId} onChange={(e) => setNewTask({ ...newTask, clientId: parseInt(e.target.value) })}>
                   <option value={0}>Select Client...</option>
                   {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -161,10 +192,12 @@ export default function Tasks() {
                     : customForms.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)
                   }
                 </Select>
-                <Select value={newTask.assignedTo} onChange={(e) => setNewTask({ ...newTask, assignedTo: parseInt(e.target.value) })}>
-                  <option value={0}>Assign to...</option>
-                  {bookkeepers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </Select>
+                {user?.role !== "bookkeeper" && (
+                  <Select value={newTask.assignedTo} onChange={(e) => setNewTask({ ...newTask, assignedTo: parseInt(e.target.value) })}>
+                    <option value={0}>Assign to...</option>
+                    {bookkeepers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </Select>
+                )}
                 <Button onClick={() => createMutation.mutate()} disabled={!newTask.clientId || !newTask.formId}>
                   Create Task
                 </Button>
@@ -201,6 +234,8 @@ export default function Tasks() {
             userRole={user?.role}
             onDragEnd={handleDragEnd}
             onMarkDone={(id) => statusMutation.mutate({ id, status: "done" })}
+            draggingTaskId={draggingTaskId}
+            dragProgress={dragProgress}
           />
         </Suspense>
       </div>
